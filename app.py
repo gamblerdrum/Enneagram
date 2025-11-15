@@ -34,52 +34,45 @@ and hands."""
         "label": "Type 4 – Intense Creative",
         "description": """Intense Creative - Fours search for meaning, depth and authenticity. They are emotionally sensitive 
 and attuned to their environment, creative and expressive as individuals. They may seem emotionally 
-moody, dramatic, focusing on what is lacking in their lives. As they integrate, Fours get in touch with their 
-inner creative voice but able to separate their identity and their emotions."""
+moody, dramatic, focusing on what is lacking. As they integrate, Fours get in touch with their inner creative 
+voice but able to separate their identity and their emotions."""
     },
     5: {
         "label": "Type 5 – Quiet Specialist",
         "description": """Quiet Specialist - Fives are private individuals with an active mental life, observing and exploring how 
 the world works. They struggle to share thoughts and feelings and may seem socially awkward or 
-disinterested. At lower integration, Fives may be withdrawn, antagonistic and aggressively defend their 
-isolation. At higher integration, they are intellectual pioneers, bringing their perceptive wisdom 
-unselfconsciously."""
+disinterested. At lower integration, they may be withdrawn, antagonistic and aggressively defend their 
+isolation. At higher integration, they are intellectual pioneers bringing their perceptive wisdom."""
     },
     6: {
         "label": "Type 6 – Loyal Sceptic",
         "description": """Loyal Sceptic - Sixes easily tune into potential danger and risks, acting on a sense of anxiety, and think 
 in sceptical ways. They value trust, responsibility and loyalty and need to feel they are safe and belong. At 
-lower integration they may be paranoid, reactive and insecure as loyalty turns into dependency and 
-oversensitivity. At higher integration, self-reliant and grounded Sixes give confidence to those around them, 
-resiliently coping with risk."""
+lower integration they may be paranoid, reactive and insecure. At higher integration, grounded Sixes give 
+confidence to those around them, coping resiliently with risk."""
     },
     7: {
         "label": "Type 7 – Enthusiastic Visionary",
         "description": """Enthusiastic Visionary - Sevens seek variety, stimulation and fun, tackling challenges with optimism 
-and engaging with life in a future-orientated way. As team members, they bring creativity, energy and 
-optimism. They may seem distracted, hedonistic, insensitive or irresponsible to others. Sevens are often 
-unhappy but deny this, escaping into hyperactivity and impulsive pleasure-seeking. At higher integration 
-they are present, finding joy within."""
+and engaging with life in a future-oriented way. They may seem distracted or impulsive. At higher 
+integration they are present, finding joy within."""
     },
     8: {
         "label": "Type 8 – Active Controller",
         "description": """Active Controller - Eights are forces of nature, with a strong presence and personality that values 
-being in control. They are guarded but caring and protective of those around them. As they mask any 
-vulnerability with a tough, no-nonsense exterior, they may seem intimidating and confrontational. At higher 
-integration they combine their directness with compassion, collaborating with others while serving the 
-greater good."""
+being in control. They may seem intimidating or confrontational, but at higher integration they combine 
+directness with compassion, collaborating with others for the greater good."""
     },
     9: {
         "label": "Type 9 – Adaptive Peacemaker",
-        "description": """Adaptive Peacemaker - Nines are diplomatic and attuned to the ideas of others, often as facilitators 
-or mediators in groups. They form the glue between people with their friendly, grounding and stable 
-demeanour. They struggle to connect to their own point of view, say no, and often avoid all conflict. At high 
-integration, they are independent and self-respecting, acting with self-awareness and autonomy."""
+        "description": """Adaptive Peacemaker - Nines are diplomatic and attuned to others, often mediators in groups. They 
+avoid conflict and may lose touch with their own priorities. At high integration, they are independent, calm, 
+and self-aware."""
     },
 }
 
 # -------------------------------
-# Quiz questions (no visible Q numbers)
+# Questions
 # -------------------------------
 
 QUESTIONS = [
@@ -153,36 +146,38 @@ QUESTIONS = [
     (51, "I procrastinate or ‘numb out’ when stressed.", 9),
     (52, "I’m easygoing and non-judgmental.", 9),
     (53, "I lose touch with my own preferences.", 9),
-    (54, "I’m motivated by comfort and harmony.", 9),
+    (54, "I’m motivated by comfort and harmony.", 9)
 ]
 
 TOTAL_QUESTIONS = len(QUESTIONS)
 
 # -------------------------------
-# Session state initialisation
+# Session state setup
 # -------------------------------
 
 if "shuffled" not in st.session_state:
     qs = QUESTIONS[:]
     random.shuffle(qs)
     st.session_state.shuffled = qs
-    st.session_state.current_index = 0  # which question we're on
-    st.session_state.answers = {}       # qid -> score
+    st.session_state.current_index = 0
+    st.session_state.answers = {}
     st.session_state.finished = False
 
+
 # -------------------------------
-# Helper: scoring
+# Helpers
 # -------------------------------
 
 def compute_scores():
     scores = {t: 0 for t in range(1, 10)}
-    type_for_q = {qid: t for (qid, _, t) in QUESTIONS}
-    for qid, value in st.session_state.answers.items():
-        scores[type_for_q[qid]] += value
+    type_map = {qid: t for (qid, _, t) in QUESTIONS}
+    for qid, score in st.session_state.answers.items():
+        scores[type_map[qid]] += score
     return scores
 
+
 # -------------------------------
-# UI
+# Main UI logic
 # -------------------------------
 
 st.title("✨ Enneagram Personality Test")
@@ -195,40 +190,33 @@ if not st.session_state.finished:
 
         st.write(f"Question {idx + 1} of {TOTAL_QUESTIONS}")
         st.progress((idx + 1) / TOTAL_QUESTIONS)
-
         st.write("")
         st.write(text)
 
-        st.write("")
         st.write("How true is this for you?")
 
         col1, col2, col3, col4 = st.columns(4)
+        clicked = None
 
-        clicked_value = None
-        if col1.button("1", help="1 — Not true for me", key=f"btn_1_{idx}"):
-            clicked_value = 1
-        if col2.button("2", help="2 — Slightly true", key=f"btn_2_{idx}"):
-            clicked_value = 2
-        if col3.button("3", help="3 — Mostly true", key=f"btn_3_{idx}"):
-            clicked_value = 3
-        if col4.button("4", help="4 — Very true", key=f"btn_4_{idx}"):
-            clicked_value = 4
+        if col1.button("1", key=f"btn1_{idx}"):
+            clicked = 1
+        if col2.button("2", key=f"btn2_{idx}"):
+            clicked = 2
+        if col3.button("3", key=f"btn3_{idx}"):
+            clicked = 3
+        if col4.button("4", key=f"btn4_{idx}"):
+            clicked = 4
 
-        if clicked_value is not None:
-            # store answer and move to next question
-            st.session_state.answers[qid] = clicked_value
+        if clicked is not None:
+            st.session_state.answers[qid] = clicked
             st.session_state.current_index += 1
-            # force rerun to show next question
-            st.experimental_rerun()
+            st.rerun()
+
     else:
-        # all questions answered
         st.session_state.finished = True
-        st.experimental_rerun()
+        st.rerun()
 
 else:
-    # ---------------------------
-    # Results screen
-    # ---------------------------
     st.subheader("Your Enneagram Results")
 
     scores = compute_scores()
@@ -245,18 +233,15 @@ else:
 
     for t in top_types:
         st.write(f"### {TYPE_INFO[t]['label']}")
-        st.write(TYPE_INFO[t]["description"])
-        st.write("")
+        st.write(TYPE_INFO[t]['description'])
+
+    st.write("---")
 
     if st.button("Restart quiz"):
-        # Reset everything
         qs = QUESTIONS[:]
         random.shuffle(qs)
         st.session_state.shuffled = qs
         st.session_state.current_index = 0
         st.session_state.answers = {}
         st.session_state.finished = False
-        st.experimental_rerun()
-
-    st.write("---")
-    st.write("This test is a tool for self-reflection — explore your top 1–2 types to see what resonates most.")
+        st.rerun()
