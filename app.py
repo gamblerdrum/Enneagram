@@ -1,5 +1,6 @@
 import streamlit as st
 import random
+from fpdf import FPDF  # for PDF generation
 
 st.set_page_config(page_title="Enneagram Personality Quiz", page_icon="✨", layout="centered")
 
@@ -35,7 +36,7 @@ and hands."""
         "description": """Intense Creative - Fours search for meaning, depth and authenticity. They are emotionally sensitive 
 and attuned to their environment, creative and expressive as individuals. They may seem emotionally 
 moody, dramatic, focusing on what is lacking. As they integrate, Fours get in touch with their inner creative 
-voice but able to separate their identity and their emotions."""
+voice but are able to separate their identity and their emotions."""
     },
     5: {
         "label": "Type 5 – Quiet Specialist",
@@ -72,7 +73,7 @@ and self-aware."""
 }
 
 # -------------------------------
-# Questions
+# Questions: (id, text, type)
 # -------------------------------
 
 QUESTIONS = [
@@ -146,7 +147,7 @@ QUESTIONS = [
     (51, "I procrastinate or ‘numb out’ when stressed.", 9),
     (52, "I’m easygoing and non-judgmental.", 9),
     (53, "I lose touch with my own preferences.", 9),
-    (54, "I’m motivated by comfort and harmony.", 9)
+    (54, "I’m motivated by comfort and harmony.", 9),
 ]
 
 TOTAL_QUESTIONS = len(QUESTIONS)
@@ -163,7 +164,6 @@ if "shuffled" not in st.session_state:
     st.session_state.answers = {}
     st.session_state.finished = False
 
-
 # -------------------------------
 # Helpers
 # -------------------------------
@@ -175,9 +175,40 @@ def compute_scores():
         scores[type_map[qid]] += score
     return scores
 
+def generate_pdf(scores, top_types):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Your Enneagram Results", ln=True)
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, "Scores by Type:", ln=True)
+
+    pdf.set_font("Arial", size=12)
+    # keep order by type number
+    for t in range(1, 10):
+        s = scores.get(t, 0)
+        pdf.multi_cell(0, 8, f"{TYPE_INFO[t]['label']}: {s}")
+
+    pdf.ln(5)
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, "Your Primary Type(s):", ln=True)
+
+    pdf.set_font("Arial", size=12)
+    for t in top_types:
+        pdf.ln(4)
+        pdf.set_font("Arial", "B", 12)
+        pdf.multi_cell(0, 8, TYPE_INFO[t]["label"])
+        pdf.set_font("Arial", size=11)
+        pdf.multi_cell(0, 8, TYPE_INFO[t]["description"])
+
+    return pdf.output(dest="S").encode("latin1")
 
 # -------------------------------
-# Main UI logic
+# Main UI
 # -------------------------------
 
 st.title("✨ Enneagram Personality Test")
@@ -190,10 +221,18 @@ if not st.session_state.finished:
 
         st.write(f"Question {idx + 1} of {TOTAL_QUESTIONS}")
         st.progress((idx + 1) / TOTAL_QUESTIONS)
+
         st.write("")
         st.write(text)
 
-        st.write("How true is this for you?")
+        st.write("")
+        st.markdown("**How true is this for you?**")
+
+        # Meaning of 1–4 above the buttons
+        st.caption(
+            "1 = Not true for me · 2 = Slightly true · "
+            "3 = Mostly true · 4 = Very true"
+        )
 
         col1, col2, col3, col4 = st.columns(4)
         clicked = None
@@ -234,8 +273,18 @@ else:
     for t in top_types:
         st.write(f"### {TYPE_INFO[t]['label']}")
         st.write(TYPE_INFO[t]['description'])
+        st.write("")
 
     st.write("---")
+
+    # PDF download button
+    pdf_bytes = generate_pdf(scores, top_types)
+    st.download_button(
+        label="📄 Download my results as PDF",
+        data=pdf_bytes,
+        file_name="enneagram_results.pdf",
+        mime="application/pdf",
+    )
 
     if st.button("Restart quiz"):
         qs = QUESTIONS[:]
@@ -245,3 +294,5 @@ else:
         st.session_state.answers = {}
         st.session_state.finished = False
         st.rerun()
+
+    st.write("This test is a tool for self-reflection — explore your top 1–2 types to see what resonates most.")
