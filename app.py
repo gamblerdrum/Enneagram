@@ -178,35 +178,36 @@ def compute_scores():
 def generate_pdf(scores, top_types):
     pdf = FPDF()
     pdf.add_page()
-    pdf.set_auto_page_break(auto=True, margin=15)
 
-    pdf.set_font("Arial", "B", 16)
+    # Add Unicode font
+    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
+    pdf.set_font("DejaVu", "", 14)
+
     pdf.cell(0, 10, "Your Enneagram Results", ln=True)
 
+    pdf.set_font("DejaVu", "B", 12)
     pdf.ln(5)
-    pdf.set_font("Arial", "B", 14)
     pdf.cell(0, 10, "Scores by Type:", ln=True)
 
-    pdf.set_font("Arial", size=12)
-    # keep order by type number
+    pdf.set_font("DejaVu", "", 10)
     for t in range(1, 10):
         s = scores.get(t, 0)
-        pdf.multi_cell(0, 8, f"{TYPE_INFO[t]['label']}: {s}")
+        pdf.multi_cell(0, 6, f"{TYPE_INFO[t]['label']}: {s}")
 
     pdf.ln(5)
-    pdf.set_font("Arial", "B", 14)
+    pdf.set_font("DejaVu", "B", 12)
     pdf.cell(0, 10, "Your Primary Type(s):", ln=True)
 
-    pdf.set_font("Arial", size=12)
+    pdf.set_font("DejaVu", "", 10)
     for t in top_types:
         pdf.ln(4)
-        pdf.set_font("Arial", "B", 12)
-        pdf.multi_cell(0, 8, TYPE_INFO[t]["label"])
-        pdf.set_font("Arial", size=11)
-        pdf.multi_cell(0, 8, TYPE_INFO[t]["description"])
+        pdf.set_font("DejaVu", "B", 11)
+        pdf.multi_cell(0, 6, TYPE_INFO[t]["label"])
+        pdf.set_font("DejaVu", "", 10)
+        pdf.multi_cell(0, 6, TYPE_INFO[t]["description"])
 
-    return pdf.output(dest="S").encode("latin1")
-
+    # Return PDF bytes directly (no latin1 encoding)
+    return pdf.output(dest="S").encode("utf-8")
 # -------------------------------
 # Main UI
 # -------------------------------
