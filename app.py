@@ -8,6 +8,12 @@ st.set_page_config(page_title="Enneagram Personality Quiz", page_icon="✨", lay
 # Type definitions
 # -------------------------------
 
+def sanitize(text: str) -> str:
+    """Make text safe for FPDF's latin-1 encoding."""
+    if not isinstance(text, str):
+        text = str(text)
+    return text.encode("latin-1", "replace").decode("latin-1")
+
 TYPE_INFO = {
     1: {
         "label": "Type 1 – Strict Perfectionist",
@@ -178,36 +184,38 @@ def compute_scores():
 def generate_pdf(scores, top_types):
     pdf = FPDF()
     pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
 
-    # Add Unicode font
-    pdf.add_font("DejaVu", "", "DejaVuSans.ttf", uni=True)
-    pdf.set_font("DejaVu", "", 14)
+    # Title
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, sanitize("Your Enneagram Results"), ln=True)
 
-    pdf.cell(0, 10, "Your Enneagram Results", ln=True)
-
-    pdf.set_font("DejaVu", "B", 12)
+    # Scores section
     pdf.ln(5)
-    pdf.cell(0, 10, "Scores by Type:", ln=True)
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, sanitize("Scores by Type:"), ln=True)
 
-    pdf.set_font("DejaVu", "", 10)
+    pdf.set_font("Arial", "", 11)
     for t in range(1, 10):
         s = scores.get(t, 0)
-        pdf.multi_cell(0, 6, f"{TYPE_INFO[t]['label']}: {s}")
+        line = f"{TYPE_INFO[t]['label']}: {s}"
+        pdf.multi_cell(0, 8, sanitize(line))
 
+    # Primary types section
     pdf.ln(5)
-    pdf.set_font("DejaVu", "B", 12)
-    pdf.cell(0, 10, "Your Primary Type(s):", ln=True)
+    pdf.set_font("Arial", "B", 14)
+    pdf.cell(0, 10, sanitize("Your Primary Type(s):"), ln=True)
 
-    pdf.set_font("DejaVu", "", 10)
+    pdf.set_font("Arial", "", 11)
     for t in top_types:
         pdf.ln(4)
-        pdf.set_font("DejaVu", "B", 11)
-        pdf.multi_cell(0, 6, TYPE_INFO[t]["label"])
-        pdf.set_font("DejaVu", "", 10)
-        pdf.multi_cell(0, 6, TYPE_INFO[t]["description"])
+        pdf.set_font("Arial", "B", 12)
+        pdf.multi_cell(0, 8, sanitize(TYPE_INFO[t]["label"]))
+        pdf.set_font("Arial", "", 11)
+        pdf.multi_cell(0, 8, sanitize(TYPE_INFO[t]["description"]))
 
-    # Return PDF bytes directly (no latin1 encoding)
-    return pdf.output(dest="S").encode("utf-8")
+    # Return bytes for Streamlit download
+    return pdf.output(dest="S").encode("latin-1", "replace")
 # -------------------------------
 # Main UI
 # -------------------------------
